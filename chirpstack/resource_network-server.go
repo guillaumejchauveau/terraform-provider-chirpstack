@@ -186,7 +186,13 @@ func (r resourceNetworkServer) Update(ctx context.Context, req tfsdk.UpdateResou
 		return
 	}
 
+	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	networkServer := api.NetworkServer{
+		Id:                          id.(types.Int64).Value,
 		Name:                        plan.Name.Value,
 		Server:                      plan.Server.Value,
 		CaCert:                      plan.CACert.Value,

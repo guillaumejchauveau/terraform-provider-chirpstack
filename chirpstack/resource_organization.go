@@ -148,7 +148,13 @@ func (r resourceOrganization) Update(ctx context.Context, req tfsdk.UpdateResour
 		return
 	}
 
+	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	organization := api.Organization{
+		Id:              id.(types.Int64).Value,
 		Name:            plan.Name.Value,
 		DisplayName:     plan.DisplayName.Value,
 		CanHaveGateways: plan.CanHaveGateways.Value,
