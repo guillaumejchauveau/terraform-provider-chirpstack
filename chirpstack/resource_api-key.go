@@ -101,7 +101,7 @@ func (r resourceAPIKey) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating network server",
-			"Could not create network server, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
@@ -154,7 +154,7 @@ func (r resourceAPIKey) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error checking API key",
-			"Could not read settings, unexpected error: "+err.Error(),
+			"Could not read settings: "+err.Error(),
 		)
 		return
 	}
@@ -187,7 +187,7 @@ func (r resourceAPIKey) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting API key",
-			"Could not delete key, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}

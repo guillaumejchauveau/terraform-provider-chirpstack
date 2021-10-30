@@ -79,7 +79,7 @@ func (p *provider) Conn() *grpc.ClientConn {
 		if err != nil {
 			p.Diagnostics.AddError(
 				"Error establishing connection",
-				"Could not connect to API: "+err.Error(),
+				err.Error(),
 			)
 			return nil
 		}

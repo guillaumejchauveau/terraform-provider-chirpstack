@@ -88,7 +88,7 @@ func (r resourceOrganization) Create(ctx context.Context, req tfsdk.CreateResour
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating organization",
-			"Could not create organization, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
@@ -121,7 +121,7 @@ func (r resourceOrganization) Read(ctx context.Context, req tfsdk.ReadResourceRe
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading organization",
-			"Could not read organization, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
@@ -148,13 +148,18 @@ func (r resourceOrganization) Update(ctx context.Context, req tfsdk.UpdateResour
 		return
 	}
 
-	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
+	// Get current state
+	var state Organization
+	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	plan.ID = state.ID
+
 	organization := api.Organization{
-		Id:              id.(types.Int64).Value,
+		Id:              plan.ID.Value,
 		Name:            plan.Name.Value,
 		DisplayName:     plan.DisplayName.Value,
 		CanHaveGateways: plan.CanHaveGateways.Value,
@@ -174,7 +179,7 @@ func (r resourceOrganization) Update(ctx context.Context, req tfsdk.UpdateResour
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating organization",
-			"Could not update organization, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
@@ -205,7 +210,7 @@ func (r resourceOrganization) Delete(ctx context.Context, req tfsdk.DeleteResour
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting organization",
-			"Could not delete organization, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}

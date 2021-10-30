@@ -64,6 +64,7 @@ func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 	return map[string]tfsdk.ResourceType{
 		"chirpstack_network-server": resourceNetworkServerType{},
 		"chirpstack_api-key":        resourceAPIKeyType{},
+		"chirpstack_user":           resourceUserType{},
 		"chirpstack_organization":   resourceOrganizationType{},
 	}, nil
 }

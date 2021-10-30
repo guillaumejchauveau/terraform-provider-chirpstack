@@ -129,7 +129,7 @@ func (r resourceNetworkServer) Create(ctx context.Context, req tfsdk.CreateResou
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating network server",
-			"Could not create network server, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
@@ -162,7 +162,7 @@ func (r resourceNetworkServer) Read(ctx context.Context, req tfsdk.ReadResourceR
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading network server",
-			"Could not read network server, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
@@ -186,13 +186,18 @@ func (r resourceNetworkServer) Update(ctx context.Context, req tfsdk.UpdateResou
 		return
 	}
 
-	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
+	// Get current state
+	var state NetworkServer
+	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	plan.ID = state.ID
+
 	networkServer := api.NetworkServer{
-		Id:                          id.(types.Int64).Value,
+		Id:                          plan.ID.Value,
 		Name:                        plan.Name.Value,
 		Server:                      plan.Server.Value,
 		CaCert:                      plan.CACert.Value,
@@ -218,7 +223,7 @@ func (r resourceNetworkServer) Update(ctx context.Context, req tfsdk.UpdateResou
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating network server",
-			"Could not update network server, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}
@@ -249,7 +254,7 @@ func (r resourceNetworkServer) Delete(ctx context.Context, req tfsdk.DeleteResou
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting network server",
-			"Could not delete network server, unexpected error: "+err.Error(),
+			err.Error(),
 		)
 		return
 	}

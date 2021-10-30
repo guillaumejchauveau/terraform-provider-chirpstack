@@ -28,6 +28,25 @@ type APIKey struct {
 	Key            types.String `tfsdk:"key"`
 }
 
+type User struct {
+	ID         types.Int64  `tfsdk:"id"`
+	Email      types.String `tfsdk:"email"`
+	Password   types.String `tfsdk:"password"`
+	IsActive   types.Bool   `tfsdk:"is_active"`
+	IsAdmin    types.Bool   `tfsdk:"is_admin"`
+	Note       types.String `tfsdk:"note"`
+	SessionTTL types.Int64  `tfsdk:"session_ttl"`
+}
+
+func (u *User) Equal(o User) bool {
+	return u.Email.Value == o.Email.Value &&
+		u.Password.Value == o.Password.Value &&
+		u.IsActive.Value == o.IsActive.Value &&
+		u.IsAdmin.Value == o.IsAdmin.Value &&
+		u.Note.Value == o.Note.Value &&
+		u.SessionTTL.Value == o.SessionTTL.Value
+}
+
 type Organization struct {
 	ID              types.Int64  `tfsdk:"id"`
 	Name            types.String `tfsdk:"name"`
