@@ -2,6 +2,7 @@ package chirpstack
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -120,7 +121,7 @@ func (r resourceNetworkServer) Create(ctx context.Context, req tfsdk.CreateResou
 		NetworkServer: &networkServer,
 	}
 
-	client := api.NewNetworkServerServiceClient(r.p.Conn())
+	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -153,7 +154,7 @@ func (r resourceNetworkServer) Read(ctx context.Context, req tfsdk.ReadResourceR
 		Id: state.ID.Value,
 	}
 
-	client := api.NewNetworkServerServiceClient(r.p.Conn())
+	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -214,7 +215,7 @@ func (r resourceNetworkServer) Update(ctx context.Context, req tfsdk.UpdateResou
 		NetworkServer: &networkServer,
 	}
 
-	client := api.NewNetworkServerServiceClient(r.p.Conn())
+	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -245,7 +246,7 @@ func (r resourceNetworkServer) Delete(ctx context.Context, req tfsdk.DeleteResou
 		Id: state.ID.Value,
 	}
 
-	client := api.NewNetworkServerServiceClient(r.p.Conn())
+	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -262,4 +263,11 @@ func (r resourceNetworkServer) Delete(ctx context.Context, req tfsdk.DeleteResou
 }
 
 func (r resourceNetworkServer) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("Error importing network server", err.Error())
+	}
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), id)
+
+	LoadRespFromResourceRead(ctx, NewImportResponse(resp), r, tfsdk.Config{})
 }

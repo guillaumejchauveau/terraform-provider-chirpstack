@@ -3,6 +3,7 @@ package chirpstack
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -28,13 +29,15 @@ type ConnectionData struct {
 	Password types.String `tfsdk:"password"`
 }
 
-func (p *provider) dial() (*grpc.ClientConn, error) {
+func (p *provider) dial(ctx context.Context) (*grpc.ClientConn, error) {
 	if p.ConnectionData.Server.Unknown ||
 		p.ConnectionData.Key.Unknown ||
 		p.ConnectionData.Email.Unknown ||
 		p.ConnectionData.Password.Unknown {
 		return nil, fmt.Errorf("configuration error: connection has unknown properties")
 	}
+
+	dialCtx, _ := context.WithTimeout(ctx, time.Second*30)
 
 	if p.ConnectionData.Key.Null {
 		if p.ConnectionData.Email.Null || p.ConnectionData.Password.Null {
@@ -45,7 +48,7 @@ func (p *provider) dial() (*grpc.ClientConn, error) {
 			grpc.WithBlock(),
 			grpc.WithInsecure(), // remove this when using TLS
 		}
-		conn, err := grpc.Dial(p.ConnectionData.Server.Value, dialOpts...)
+		conn, err := grpc.DialContext(dialCtx, p.ConnectionData.Server.Value, dialOpts...)
 		if err != nil {
 			return nil, err
 		}
@@ -70,12 +73,12 @@ func (p *provider) dial() (*grpc.ClientConn, error) {
 		grpc.WithInsecure(), // remove this when using TLS
 	}
 
-	return grpc.Dial(p.ConnectionData.Server.Value, dialOpts...)
+	return grpc.DialContext(dialCtx, p.ConnectionData.Server.Value, dialOpts...)
 }
 
-func (p *provider) Conn() *grpc.ClientConn {
+func (p *provider) Conn(ctx context.Context) *grpc.ClientConn {
 	if p.conn == nil {
-		conn, err := p.dial()
+		conn, err := p.dial(ctx)
 		if err != nil {
 			p.Diagnostics.AddError(
 				"Error establishing connection",

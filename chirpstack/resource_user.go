@@ -2,6 +2,7 @@ package chirpstack
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -86,7 +87,7 @@ func (r resourceUser) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		User:     &user,
 	}
 
-	client := api.NewUserServiceClient(r.p.Conn())
+	client := api.NewUserServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -120,7 +121,7 @@ func (r resourceUser) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 		Id: state.ID.Value,
 	}
 
-	client := api.NewUserServiceClient(r.p.Conn())
+	client := api.NewUserServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -166,7 +167,7 @@ func (r resourceUser) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 
 	plan.ID = state.ID
 
-	client := api.NewUserServiceClient(r.p.Conn())
+	client := api.NewUserServiceClient(r.p.Conn(ctx))
 	if !state.Password.Equal(plan.Password) {
 		request := api.UpdateUserPasswordRequest{
 			UserId:   plan.ID.Value,
@@ -231,7 +232,7 @@ func (r resourceUser) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 		Id: state.ID.Value,
 	}
 
-	client := api.NewUserServiceClient(r.p.Conn())
+	client := api.NewUserServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -248,4 +249,11 @@ func (r resourceUser) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 }
 
 func (r resourceUser) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("Error importing user", err.Error())
+	}
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), id)
+
+	LoadRespFromResourceRead(ctx, NewImportResponse(resp), r, tfsdk.Config{})
 }

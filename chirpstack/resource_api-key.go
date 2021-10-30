@@ -92,7 +92,7 @@ func (r resourceAPIKey) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 		ApiKey: &apiKey,
 	}
 
-	client := api.NewInternalServiceClient(r.p.Conn())
+	client := api.NewInternalServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -178,7 +178,7 @@ func (r resourceAPIKey) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 		Id: state.ID.Value,
 	}
 
-	internalClient := api.NewInternalServiceClient(r.p.Conn())
+	internalClient := api.NewInternalServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -195,4 +195,5 @@ func (r resourceAPIKey) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 }
 
 func (r resourceAPIKey) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+	resp.Diagnostics.AddError("Cannot import an API key", "The key can only be known on its creation.")
 }

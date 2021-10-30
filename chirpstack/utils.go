@@ -72,3 +72,26 @@ func (resp UpdateResponse) Diagnostics() diag.Diagnostics {
 func (resp UpdateResponse) SetDiagnostics(diags diag.Diagnostics) {
 	resp.resp.Diagnostics = diags
 }
+
+type ImportResponse struct {
+	resp *tfsdk.ImportResourceStateResponse
+}
+
+func NewImportResponse(resp *tfsdk.ImportResourceStateResponse) ImportResponse {
+	return ImportResponse{
+		resp: resp,
+	}
+}
+
+func (resp ImportResponse) State() tfsdk.State {
+	return resp.resp.State
+}
+func (resp ImportResponse) SetState(state tfsdk.State) {
+	resp.resp.State = state
+}
+func (resp ImportResponse) Diagnostics() diag.Diagnostics {
+	return resp.resp.Diagnostics
+}
+func (resp ImportResponse) SetDiagnostics(diags diag.Diagnostics) {
+	resp.resp.Diagnostics = diags
+}
