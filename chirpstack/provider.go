@@ -62,10 +62,11 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 // GetResources - Defines provider resources
 func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
-		"chirpstack_network-server": resourceNetworkServerType{},
-		"chirpstack_api-key":        resourceAPIKeyType{},
-		"chirpstack_user":           resourceUserType{},
-		"chirpstack_organization":   resourceOrganizationType{},
+		"chirpstack_network-server":    resourceNetworkServerType{},
+		"chirpstack_api-key":           resourceAPIKeyType{},
+		"chirpstack_user":              resourceUserType{},
+		"chirpstack_organization":      resourceOrganizationType{},
+		"chirpstack_organization-user": resourceOrganizationUserType{},
 	}, nil
 }
 

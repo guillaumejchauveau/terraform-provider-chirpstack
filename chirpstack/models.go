@@ -55,3 +55,12 @@ type Organization struct {
 	MaxGatewayCount types.Int64  `tfsdk:"max_gateway_count"`
 	MaxDeviceCount  types.Int64  `tfsdk:"max_device_count"`
 }
+
+type OrganizationUser struct {
+	OrganizationID types.Int64  `tfsdk:"organization_id"`
+	UserID         types.Int64  `tfsdk:"user_id"`
+	Email          types.String `tfsdk:"email"`
+	IsAdmin        types.Bool   `tfsdk:"is_admin"`
+	IsDeviceAdmin  types.Bool   `tfsdk:"is_device_admin"`
+	IsGatewayAdmin types.Bool   `tfsdk:"is_gateway_admin"`
+}

@@ -13,7 +13,6 @@ import (
 
 type resourceAPIKeyType struct{}
 
-// APIKey Resource schema
 func (r resourceAPIKeyType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{

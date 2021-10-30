@@ -13,7 +13,6 @@ import (
 
 type resourceUserType struct{}
 
-// NetworkServer Resource schema
 func (r resourceUserType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
