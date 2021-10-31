@@ -2,6 +2,7 @@ package chirpstack
 
 import (
 	"context"
+	"terraform-provider-chirpstack/chirpstack/models"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -15,50 +16,7 @@ import (
 type resourceAPIKeyType struct{}
 
 func (r resourceAPIKeyType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.StringType,
-				Computed: true,
-			},
-			"name": {
-				Type:     types.StringType,
-				Required: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-				},
-			},
-			"is_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-				},
-			},
-			"organization_id": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-				},
-			},
-			"application_id": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-				},
-			},
-			"key": {
-				Type:      types.StringType,
-				Computed:  true,
-				Sensitive: true,
-			},
-		},
-	}, nil
+	return models.APIKeySchema(), nil
 }
 
 // New resource instance
@@ -75,7 +33,7 @@ type resourceAPIKey struct {
 // Create a new resource
 func (r resourceAPIKey) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// Retrieve values from plan
-	var plan APIKey
+	var plan models.APIKey
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -106,7 +64,7 @@ func (r resourceAPIKey) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 		return
 	}
 
-	plan.ID = types.String{Value: response.Id}
+	plan.Id = types.String{Value: response.Id}
 	plan.Key = types.String{Value: response.JwtToken}
 
 	diags = resp.State.Set(ctx, &plan)
@@ -119,7 +77,7 @@ func (r resourceAPIKey) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 // Read resource information
 func (r resourceAPIKey) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state APIKey
+	var state models.APIKey
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -162,7 +120,7 @@ func (r resourceAPIKey) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 // Delete resource
 func (r resourceAPIKey) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// Get current state.
-	var state APIKey
+	var state models.APIKey
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -170,7 +128,7 @@ func (r resourceAPIKey) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 	}
 
 	deleteRequest := api.DeleteAPIKeyRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	internalClient := api.NewInternalServiceClient(r.p.Conn(ctx))

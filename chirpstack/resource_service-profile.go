@@ -2,11 +2,11 @@ package chirpstack
 
 import (
 	"context"
+	"terraform-provider-chirpstack/chirpstack/models"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,126 +15,7 @@ import (
 type resourceServiceProfileType struct{}
 
 func (r resourceServiceProfileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.StringType,
-				Computed: true,
-			},
-			"name": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"organization_id": {
-				Type:     types.Int64Type,
-				Required: true,
-			},
-			"network_server_id": {
-				Type:     types.Int64Type,
-				Required: true,
-			},
-			"ul_rate": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"ul_bucket_size": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"ul_rate_policy": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"dl_rate": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"dl_bucket_size": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"dl_rate_policy": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"add_gw_metadata": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"dev_status_req_freq": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"report_dev_status_battery": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"report_dev_status_margin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"dr_min": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"dr_max": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"channel_mask": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"pr_allowed": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"hr_allowed": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"ra_allowed": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"nwk_geo_loc": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"target_per": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"min_gw_diversity": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"gws_private": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-		},
-	}, nil
+	return models.ServiceProfileSchema(), nil
 }
 
 // New resource instance
@@ -151,38 +32,14 @@ type resourceServiceProfile struct {
 // Create a new resource
 func (r resourceServiceProfile) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// Retrieve values from plan
-	var plan ServiceProfile
+	var plan models.ServiceProfile
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	serviceprofile := api.ServiceProfile{
-		Name:                   plan.Name.Value,
-		OrganizationId:         plan.OrganizationId.Value,
-		NetworkServerId:        plan.NetworkServerId.Value,
-		UlRate:                 uint32(plan.UlRate.Value),
-		UlBucketSize:           uint32(plan.UlBucketSize.Value),
-		UlRatePolicy:           api.RatePolicy(plan.UlRatePolicy.Value),
-		DlRate:                 uint32(plan.DlRate.Value),
-		DlBucketSize:           uint32(plan.DlBucketSize.Value),
-		DlRatePolicy:           api.RatePolicy(plan.DlRatePolicy.Value),
-		AddGwMetadata:          plan.AddGwMetadata.Value,
-		DevStatusReqFreq:       uint32(plan.DevStatusReqFreq.Value),
-		ReportDevStatusBattery: plan.ReportDevStatusBattery.Value,
-		ReportDevStatusMargin:  plan.ReportDevStatusMargin.Value,
-		DrMin:                  uint32(plan.DrMin.Value),
-		DrMax:                  uint32(plan.DrMax.Value),
-		ChannelMask:            nil, // TODO
-		PrAllowed:              plan.PrAllowed.Value,
-		HrAllowed:              plan.HrAllowed.Value,
-		RaAllowed:              plan.RaAllowed.Value,
-		NwkGeoLoc:              plan.NwkGeoLoc.Value,
-		TargetPer:              uint32(plan.TargetPer.Value),
-		MinGwDiversity:         uint32(plan.MinGwDiversity.Value),
-		GwsPrivate:             plan.GwsPrivate.Value,
-	}
+	serviceprofile := plan.ToApiType()
 	request := api.CreateServiceProfileRequest{
 		ServiceProfile: &serviceprofile,
 	}
@@ -201,7 +58,7 @@ func (r resourceServiceProfile) Create(ctx context.Context, req tfsdk.CreateReso
 		return
 	}
 
-	plan.ID = types.String{Value: response.Id}
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), response.Id)
 
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -215,7 +72,7 @@ func (r resourceServiceProfile) Create(ctx context.Context, req tfsdk.CreateReso
 // Read resource information
 func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state ServiceProfile
+	var state models.ServiceProfile
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -223,7 +80,7 @@ func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	request := api.GetServiceProfileRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
@@ -246,31 +103,8 @@ func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResource
 		return
 	}
 
-	state.Name = types.String{Value: response.ServiceProfile.Name}
-	state.OrganizationId = types.Int64{Value: int64(response.ServiceProfile.OrganizationId)}
-	state.NetworkServerId = types.Int64{Value: int64(response.ServiceProfile.NetworkServerId)}
-	state.UlRate = types.Int64{Value: int64(response.ServiceProfile.UlRate)}
-	state.UlBucketSize = types.Int64{Value: int64(response.ServiceProfile.UlBucketSize)}
-	state.UlRatePolicy = types.Int64{Value: int64(response.ServiceProfile.UlRatePolicy)}
-	state.DlRate = types.Int64{Value: int64(response.ServiceProfile.DlRate)}
-	state.DlBucketSize = types.Int64{Value: int64(response.ServiceProfile.DlBucketSize)}
-	state.DlRatePolicy = types.Int64{Value: int64(response.ServiceProfile.DlRatePolicy)}
-	state.AddGwMetadata = types.Bool{Value: response.ServiceProfile.AddGwMetadata}
-	state.DevStatusReqFreq = types.Int64{Value: int64(response.ServiceProfile.DevStatusReqFreq)}
-	state.ReportDevStatusBattery = types.Bool{Value: response.ServiceProfile.ReportDevStatusBattery}
-	state.ReportDevStatusMargin = types.Bool{Value: response.ServiceProfile.ReportDevStatusMargin}
-	state.DrMin = types.Int64{Value: int64(response.ServiceProfile.DrMin)}
-	state.DrMax = types.Int64{Value: int64(response.ServiceProfile.DrMax)}
-	state.ChannelMask = types.Int64{Null: true} // TODO
-	state.PrAllowed = types.Bool{Value: response.ServiceProfile.PrAllowed}
-	state.HrAllowed = types.Bool{Value: response.ServiceProfile.HrAllowed}
-	state.RaAllowed = types.Bool{Value: response.ServiceProfile.RaAllowed}
-	state.NwkGeoLoc = types.Bool{Value: response.ServiceProfile.NwkGeoLoc}
-	state.TargetPer = types.Int64{Value: int64(response.ServiceProfile.TargetPer)}
-	state.MinGwDiversity = types.Int64{Value: int64(response.ServiceProfile.MinGwDiversity)}
-	state.GwsPrivate = types.Bool{Value: response.ServiceProfile.GwsPrivate}
-
-	diags = resp.State.Set(ctx, &state)
+	newState := models.ServiceProfileFromApiType(response.ServiceProfile)
+	diags = resp.State.Set(ctx, &newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -280,7 +114,7 @@ func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResource
 // Update resource
 func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Retrieve values from plan
-	var plan ServiceProfile
+	var plan models.ServiceProfile
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -288,41 +122,16 @@ func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateReso
 	}
 
 	// Get current state
-	var state ServiceProfile
+	var state models.ServiceProfile
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	plan.ID = state.ID
+	plan.Id = state.Id
 
-	serviceprofile := api.ServiceProfile{
-		Id:                     plan.ID.Value,
-		Name:                   plan.Name.Value,
-		OrganizationId:         plan.OrganizationId.Value,
-		NetworkServerId:        plan.NetworkServerId.Value,
-		UlRate:                 uint32(plan.UlRate.Value),
-		UlBucketSize:           uint32(plan.UlBucketSize.Value),
-		UlRatePolicy:           api.RatePolicy(plan.UlRatePolicy.Value),
-		DlRate:                 uint32(plan.DlRate.Value),
-		DlBucketSize:           uint32(plan.DlBucketSize.Value),
-		DlRatePolicy:           api.RatePolicy(plan.DlRatePolicy.Value),
-		AddGwMetadata:          plan.AddGwMetadata.Value,
-		DevStatusReqFreq:       uint32(plan.DevStatusReqFreq.Value),
-		ReportDevStatusBattery: plan.ReportDevStatusBattery.Value,
-		ReportDevStatusMargin:  plan.ReportDevStatusMargin.Value,
-		DrMin:                  uint32(plan.DrMin.Value),
-		DrMax:                  uint32(plan.DrMax.Value),
-		ChannelMask:            nil, // TODO
-		PrAllowed:              plan.PrAllowed.Value,
-		HrAllowed:              plan.HrAllowed.Value,
-		RaAllowed:              plan.RaAllowed.Value,
-		NwkGeoLoc:              plan.NwkGeoLoc.Value,
-		TargetPer:              uint32(plan.TargetPer.Value),
-		MinGwDiversity:         uint32(plan.MinGwDiversity.Value),
-		GwsPrivate:             plan.GwsPrivate.Value,
-	}
+	serviceprofile := plan.ToApiType()
 	request := api.UpdateServiceProfileRequest{
 		ServiceProfile: &serviceprofile,
 	}
@@ -347,7 +156,7 @@ func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateReso
 // Delete resource
 func (r resourceServiceProfile) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// Get current state
-	var state ServiceProfile
+	var state models.ServiceProfile
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -355,7 +164,7 @@ func (r resourceServiceProfile) Delete(ctx context.Context, req tfsdk.DeleteReso
 	}
 
 	request := api.DeleteServiceProfileRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))

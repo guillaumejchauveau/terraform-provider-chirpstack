@@ -3,11 +3,11 @@ package chirpstack
 import (
 	"context"
 	"strconv"
+	"terraform-provider-chirpstack/chirpstack/models"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,43 +16,7 @@ import (
 type resourceUserType struct{}
 
 func (r resourceUserType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.Int64Type,
-				Computed: true,
-			},
-			"email": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"password": {
-				Type:      types.StringType,
-				Required:  true,
-				Sensitive: true,
-			},
-			"is_active": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"is_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"note": {
-				Type:     types.StringType,
-				Optional: true,
-				Computed: true,
-			},
-			"session_ttl": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-		},
-	}, nil
+	return models.UserSchema(), nil
 }
 
 // New resource instance
@@ -69,20 +33,14 @@ type resourceUser struct {
 // Create a new resource
 func (r resourceUser) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// Retrieve values from plan
-	var plan User
+	var plan models.User
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	user := api.User{
-		Email:      plan.Email.Value,
-		IsActive:   plan.IsActive.Value,
-		IsAdmin:    plan.IsAdmin.Value,
-		Note:       plan.Note.Value,
-		SessionTtl: int32(plan.SessionTTL.Value),
-	}
+	user := plan.ToApiType()
 	request := api.CreateUserRequest{
 		Password: plan.Password.Value,
 		User:     &user,
@@ -111,7 +69,7 @@ func (r resourceUser) Create(ctx context.Context, req tfsdk.CreateResourceReques
 // Read resource information
 func (r resourceUser) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state User
+	var state models.User
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -119,7 +77,7 @@ func (r resourceUser) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 	}
 
 	request := api.GetUserRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	client := api.NewUserServiceClient(r.p.Conn(ctx))
@@ -142,12 +100,8 @@ func (r resourceUser) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 		return
 	}
 
-	state.Email = types.String{Value: response.User.Email}
-	state.IsActive = types.Bool{Value: response.User.IsActive}
-	state.IsAdmin = types.Bool{Value: response.User.IsAdmin}
-	state.Note = types.String{Value: response.User.Note}
-	state.SessionTTL = types.Int64{Value: int64(response.User.SessionTtl)}
-	diags = resp.State.Set(ctx, &state)
+	newState := models.UserFromApiType(response.User, state.Password.Value)
+	diags = resp.State.Set(ctx, &newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -157,7 +111,7 @@ func (r resourceUser) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 // Update resource
 func (r resourceUser) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Retrieve values from plan
-	var plan User
+	var plan models.User
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -165,19 +119,19 @@ func (r resourceUser) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 	}
 
 	// Get current state
-	var state User
+	var state models.User
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	plan.ID = state.ID
+	plan.Id = state.Id
 
 	client := api.NewUserServiceClient(r.p.Conn(ctx))
 	if !state.Password.Equal(plan.Password) {
 		request := api.UpdateUserPasswordRequest{
-			UserId:   plan.ID.Value,
+			UserId:   plan.Id.Value,
 			Password: plan.Password.Value,
 		}
 		_, err := client.UpdatePassword(ctx, &request)
@@ -197,14 +151,7 @@ func (r resourceUser) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 		return
 	}
 
-	user := api.User{
-		Id:         plan.ID.Value,
-		Email:      plan.Email.Value,
-		IsActive:   plan.IsActive.Value,
-		IsAdmin:    plan.IsAdmin.Value,
-		Note:       plan.Note.Value,
-		SessionTtl: int32(plan.SessionTTL.Value),
-	}
+	user := plan.ToApiType()
 	request := api.UpdateUserRequest{
 		User: &user,
 	}
@@ -228,7 +175,7 @@ func (r resourceUser) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 // Delete resource
 func (r resourceUser) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// Get current state
-	var state User
+	var state models.User
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -236,7 +183,7 @@ func (r resourceUser) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 	}
 
 	request := api.DeleteUserRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	client := api.NewUserServiceClient(r.p.Conn(ctx))

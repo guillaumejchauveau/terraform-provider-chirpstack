@@ -3,11 +3,11 @@ package chirpstack
 import (
 	"context"
 	"strconv"
+	"terraform-provider-chirpstack/chirpstack/models"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,72 +16,7 @@ import (
 type resourceNetworkServerType struct{}
 
 func (r resourceNetworkServerType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.Int64Type,
-				Computed: true,
-			},
-			"name": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"server": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"ca_cert": {
-				Type:      types.StringType,
-				Optional:  true,
-				Computed:  true,
-				Sensitive: true,
-			},
-			"tls_cert": {
-				Type:      types.StringType,
-				Optional:  true,
-				Computed:  true,
-				Sensitive: true,
-			},
-			"routing_profil_ca_cert": {
-				Type:      types.StringType,
-				Optional:  true,
-				Computed:  true,
-				Sensitive: true,
-			},
-			"routing_profil_tls_cert": {
-				Type:      types.StringType,
-				Optional:  true,
-				Computed:  true,
-				Sensitive: true,
-			},
-			"routing_profil_tls_key": {
-				Type:      types.StringType,
-				Optional:  true,
-				Computed:  true,
-				Sensitive: true,
-			},
-			"gateway_discovery_enabled": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"gateway_discovery_interval": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"gateway_discovery_tx_frequency": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"gateway_discovery_dr": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-		},
-	}, nil
+	return models.NetworkServerSchema(), nil
 }
 
 // New resource instance
@@ -98,26 +33,14 @@ type resourceNetworkServer struct {
 // Create a new resource
 func (r resourceNetworkServer) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// Retrieve values from plan
-	var plan NetworkServer
+	var plan models.NetworkServer
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	networkServer := api.NetworkServer{
-		Name:                        plan.Name.Value,
-		Server:                      plan.Server.Value,
-		CaCert:                      plan.CACert.Value,
-		TlsCert:                     plan.TLSCert.Value,
-		RoutingProfileCaCert:        plan.RoutingProfileCACert.Value,
-		RoutingProfileTlsCert:       plan.RoutingProfileTLSCert.Value,
-		RoutingProfileTlsKey:        plan.RoutingProfileTLSKey.Value,
-		GatewayDiscoveryEnabled:     plan.GatewayDiscoveryEnabled.Value,
-		GatewayDiscoveryInterval:    uint32(plan.GatewayDiscoveryInterval.Value),
-		GatewayDiscoveryTxFrequency: uint32(plan.GatewayDiscoveryTXFrequency.Value),
-		GatewayDiscoveryDr:          uint32(plan.GatewayDiscoveryDR.Value),
-	}
+	networkServer := plan.ToApiType()
 	request := api.CreateNetworkServerRequest{
 		NetworkServer: &networkServer,
 	}
@@ -144,7 +67,7 @@ func (r resourceNetworkServer) Create(ctx context.Context, req tfsdk.CreateResou
 // Read resource information
 func (r resourceNetworkServer) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state NetworkServer
+	var state models.NetworkServer
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -152,7 +75,7 @@ func (r resourceNetworkServer) Read(ctx context.Context, req tfsdk.ReadResourceR
 	}
 
 	request := api.GetNetworkServerRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
@@ -175,9 +98,8 @@ func (r resourceNetworkServer) Read(ctx context.Context, req tfsdk.ReadResourceR
 		return
 	}
 
-	state.Name = types.String{Value: response.NetworkServer.Name}
-	state.Server = types.String{Value: response.NetworkServer.Server}
-	diags = resp.State.Set(ctx, &state)
+	newState := models.NetworkServerFromApiType(response.NetworkServer)
+	diags = resp.State.Set(ctx, &newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -187,7 +109,7 @@ func (r resourceNetworkServer) Read(ctx context.Context, req tfsdk.ReadResourceR
 // Update resource
 func (r resourceNetworkServer) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Retrieve values from plan
-	var plan NetworkServer
+	var plan models.NetworkServer
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -195,29 +117,16 @@ func (r resourceNetworkServer) Update(ctx context.Context, req tfsdk.UpdateResou
 	}
 
 	// Get current state
-	var state NetworkServer
+	var state models.NetworkServer
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	plan.ID = state.ID
+	plan.Id = state.Id
 
-	networkServer := api.NetworkServer{
-		Id:                          plan.ID.Value,
-		Name:                        plan.Name.Value,
-		Server:                      plan.Server.Value,
-		CaCert:                      plan.CACert.Value,
-		TlsCert:                     plan.TLSCert.Value,
-		RoutingProfileCaCert:        plan.RoutingProfileCACert.Value,
-		RoutingProfileTlsCert:       plan.RoutingProfileTLSCert.Value,
-		RoutingProfileTlsKey:        plan.RoutingProfileTLSKey.Value,
-		GatewayDiscoveryEnabled:     plan.GatewayDiscoveryEnabled.Value,
-		GatewayDiscoveryInterval:    uint32(plan.GatewayDiscoveryInterval.Value),
-		GatewayDiscoveryTxFrequency: uint32(plan.GatewayDiscoveryTXFrequency.Value),
-		GatewayDiscoveryDr:          uint32(plan.GatewayDiscoveryDR.Value),
-	}
+	networkServer := plan.ToApiType()
 	request := api.UpdateNetworkServerRequest{
 		NetworkServer: &networkServer,
 	}
@@ -242,7 +151,7 @@ func (r resourceNetworkServer) Update(ctx context.Context, req tfsdk.UpdateResou
 // Delete resource
 func (r resourceNetworkServer) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// Get current state
-	var state NetworkServer
+	var state models.NetworkServer
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -250,7 +159,7 @@ func (r resourceNetworkServer) Delete(ctx context.Context, req tfsdk.DeleteResou
 	}
 
 	request := api.DeleteNetworkServerRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))

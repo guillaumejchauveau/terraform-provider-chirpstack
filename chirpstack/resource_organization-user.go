@@ -4,11 +4,11 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"terraform-provider-chirpstack/chirpstack/models"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,46 +17,7 @@ import (
 type resourceOrganizationUserType struct{}
 
 func (r resourceOrganizationUserType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"organization_id": {
-				Type:     types.Int64Type,
-				Required: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-				},
-			},
-			"user_id": {
-				Type:     types.Int64Type,
-				Required: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-				},
-			},
-			"email": {
-				Type:     types.StringType,
-				Required: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-				},
-			},
-			"is_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"is_device_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"is_gateway_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-		},
-	}, nil
+	return models.OrganizationUserSchema(), nil
 }
 
 // New resource instance
@@ -73,21 +34,14 @@ type resourceOrganizationUser struct {
 // Create a new resource
 func (r resourceOrganizationUser) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// Retrieve values from plan
-	var plan OrganizationUser
+	var plan models.OrganizationUser
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	organizationUser := api.OrganizationUser{
-		OrganizationId: plan.OrganizationID.Value,
-		UserId:         plan.UserID.Value,
-		Email:          plan.Email.Value,
-		IsAdmin:        plan.IsAdmin.Value,
-		IsDeviceAdmin:  plan.IsDeviceAdmin.Value,
-		IsGatewayAdmin: plan.IsGatewayAdmin.Value,
-	}
+	organizationUser := plan.ToApiType()
 	request := api.AddOrganizationUserRequest{
 		OrganizationUser: &organizationUser,
 	}
@@ -106,8 +60,8 @@ func (r resourceOrganizationUser) Create(ctx context.Context, req tfsdk.CreateRe
 		return
 	}
 
-	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("organization_id"), plan.OrganizationID.Value)
-	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("user_id"), plan.UserID.Value)
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("organization_id"), plan.OrganizationId.Value)
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("user_id"), plan.UserId.Value)
 
 	LoadRespFromResourceRead(ctx, NewCreateResponse(resp), r, req.ProviderMeta)
 }
@@ -115,7 +69,7 @@ func (r resourceOrganizationUser) Create(ctx context.Context, req tfsdk.CreateRe
 // Read resource information
 func (r resourceOrganizationUser) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state OrganizationUser
+	var state models.OrganizationUser
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -123,8 +77,8 @@ func (r resourceOrganizationUser) Read(ctx context.Context, req tfsdk.ReadResour
 	}
 
 	request := api.GetOrganizationUserRequest{
-		OrganizationId: state.OrganizationID.Value,
-		UserId:         state.UserID.Value,
+		OrganizationId: state.OrganizationId.Value,
+		UserId:         state.UserId.Value,
 	}
 
 	client := api.NewOrganizationServiceClient(r.p.Conn(ctx))
@@ -147,11 +101,8 @@ func (r resourceOrganizationUser) Read(ctx context.Context, req tfsdk.ReadResour
 		return
 	}
 
-	state.Email = types.String{Value: response.OrganizationUser.Email}
-	state.IsAdmin = types.Bool{Value: response.OrganizationUser.IsAdmin}
-	state.IsDeviceAdmin = types.Bool{Value: response.OrganizationUser.IsDeviceAdmin}
-	state.IsGatewayAdmin = types.Bool{Value: response.OrganizationUser.IsGatewayAdmin}
-	diags = resp.State.Set(ctx, &state)
+	newState := models.OrganizationUserFromApiType(response.OrganizationUser)
+	diags = resp.State.Set(ctx, &newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -161,21 +112,14 @@ func (r resourceOrganizationUser) Read(ctx context.Context, req tfsdk.ReadResour
 // Update resource
 func (r resourceOrganizationUser) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Retrieve values from plan
-	var plan OrganizationUser
+	var plan models.OrganizationUser
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	organizationUser := api.OrganizationUser{
-		OrganizationId: plan.OrganizationID.Value,
-		UserId:         plan.UserID.Value,
-		Email:          plan.Email.Value,
-		IsAdmin:        plan.IsAdmin.Value,
-		IsDeviceAdmin:  plan.IsDeviceAdmin.Value,
-		IsGatewayAdmin: plan.IsGatewayAdmin.Value,
-	}
+	organizationUser := plan.ToApiType()
 	request := api.UpdateOrganizationUserRequest{
 		OrganizationUser: &organizationUser,
 	}
@@ -200,7 +144,7 @@ func (r resourceOrganizationUser) Update(ctx context.Context, req tfsdk.UpdateRe
 // Delete resource
 func (r resourceOrganizationUser) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// Get current state
-	var state OrganizationUser
+	var state models.OrganizationUser
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -208,8 +152,8 @@ func (r resourceOrganizationUser) Delete(ctx context.Context, req tfsdk.DeleteRe
 	}
 
 	request := api.DeleteOrganizationUserRequest{
-		OrganizationId: state.OrganizationID.Value,
-		UserId:         state.UserID.Value,
+		OrganizationId: state.OrganizationId.Value,
+		UserId:         state.UserId.Value,
 	}
 
 	client := api.NewOrganizationServiceClient(r.p.Conn(ctx))

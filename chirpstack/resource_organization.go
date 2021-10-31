@@ -3,11 +3,11 @@ package chirpstack
 import (
 	"context"
 	"strconv"
+	"terraform-provider-chirpstack/chirpstack/models"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,37 +16,7 @@ import (
 type resourceOrganizationType struct{}
 
 func (r resourceOrganizationType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.Int64Type,
-				Computed: true,
-			},
-			"name": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"display_name": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"can_have_gateways": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"max_gateway_count": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"max_device_count": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-		},
-	}, nil
+	return models.OrganizationSchema(), nil
 }
 
 // New resource instance
@@ -63,20 +33,14 @@ type resourceOrganization struct {
 // Create a new resource
 func (r resourceOrganization) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// Retrieve values from plan
-	var plan Organization
+	var plan models.Organization
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	organization := api.Organization{
-		Name:            plan.Name.Value,
-		DisplayName:     plan.DisplayName.Value,
-		CanHaveGateways: plan.CanHaveGateways.Value,
-		MaxGatewayCount: uint32(plan.MaxGatewayCount.Value),
-		MaxDeviceCount:  uint32(plan.MaxDeviceCount.Value),
-	}
+	organization := plan.ToApiType()
 	request := api.CreateOrganizationRequest{
 		Organization: &organization,
 	}
@@ -103,7 +67,7 @@ func (r resourceOrganization) Create(ctx context.Context, req tfsdk.CreateResour
 // Read resource information
 func (r resourceOrganization) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state Organization
+	var state models.Organization
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -111,7 +75,7 @@ func (r resourceOrganization) Read(ctx context.Context, req tfsdk.ReadResourceRe
 	}
 
 	request := api.GetOrganizationRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	client := api.NewOrganizationServiceClient(r.p.Conn(ctx))
@@ -134,12 +98,8 @@ func (r resourceOrganization) Read(ctx context.Context, req tfsdk.ReadResourceRe
 		return
 	}
 
-	state.Name = types.String{Value: response.Organization.Name}
-	state.DisplayName = types.String{Value: response.Organization.DisplayName}
-	state.CanHaveGateways = types.Bool{Value: response.Organization.CanHaveGateways}
-	state.MaxGatewayCount = types.Int64{Value: int64(response.Organization.MaxGatewayCount)}
-	state.MaxDeviceCount = types.Int64{Value: int64(response.Organization.MaxDeviceCount)}
-	diags = resp.State.Set(ctx, &state)
+	newState := models.OrganizationFromApiType(response.Organization)
+	diags = resp.State.Set(ctx, &newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -149,7 +109,7 @@ func (r resourceOrganization) Read(ctx context.Context, req tfsdk.ReadResourceRe
 // Update resource
 func (r resourceOrganization) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Retrieve values from plan
-	var plan Organization
+	var plan models.Organization
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -157,23 +117,16 @@ func (r resourceOrganization) Update(ctx context.Context, req tfsdk.UpdateResour
 	}
 
 	// Get current state
-	var state Organization
+	var state models.Organization
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	plan.ID = state.ID
+	plan.Id = state.Id
 
-	organization := api.Organization{
-		Id:              plan.ID.Value,
-		Name:            plan.Name.Value,
-		DisplayName:     plan.DisplayName.Value,
-		CanHaveGateways: plan.CanHaveGateways.Value,
-		MaxGatewayCount: uint32(plan.MaxGatewayCount.Value),
-		MaxDeviceCount:  uint32(plan.MaxDeviceCount.Value),
-	}
+	organization := plan.ToApiType()
 	request := api.UpdateOrganizationRequest{
 		Organization: &organization,
 	}
@@ -198,7 +151,7 @@ func (r resourceOrganization) Update(ctx context.Context, req tfsdk.UpdateResour
 // Delete resource
 func (r resourceOrganization) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// Get current state
-	var state Organization
+	var state models.Organization
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -206,7 +159,7 @@ func (r resourceOrganization) Delete(ctx context.Context, req tfsdk.DeleteResour
 	}
 
 	request := api.DeleteOrganizationRequest{
-		Id: state.ID.Value,
+		Id: state.Id.Value,
 	}
 
 	client := api.NewOrganizationServiceClient(r.p.Conn(ctx))
