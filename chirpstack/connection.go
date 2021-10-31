@@ -37,7 +37,7 @@ func (p *provider) dial(ctx context.Context) (*grpc.ClientConn, error) {
 		return nil, fmt.Errorf("configuration error: connection has unknown properties")
 	}
 
-	dialCtx, _ := context.WithTimeout(ctx, time.Second*30)
+	dialCtx, _ := context.WithTimeout(ctx, time.Minute)
 
 	if p.ConnectionData.Key.Null {
 		if p.ConnectionData.Email.Null || p.ConnectionData.Password.Null {
@@ -80,7 +80,7 @@ func (p *provider) Conn(ctx context.Context) *grpc.ClientConn {
 	if p.conn == nil {
 		conn, err := p.dial(ctx)
 		if err != nil {
-			p.Diagnostics.AddError(
+			p.diagnostics.AddError(
 				"Error establishing connection",
 				err.Error(),
 			)

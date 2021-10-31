@@ -8,7 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type resourceAPIKeyType struct{}
@@ -92,7 +93,7 @@ func (r resourceAPIKey) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	}
 
 	client := api.NewInternalServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -138,22 +139,17 @@ func (r resourceAPIKey) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 		grpc.WithPerRPCCredentials(APIToken(state.Key.Value)),
 		grpc.WithInsecure(), // remove this when using TLS
 	}
-	conn, err := grpc.Dial(r.p.ConnectionData.Server.Value, dialOpts...)
+	_, err := grpc.Dial(r.p.ConnectionData.Server.Value, dialOpts...)
 	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			if e.Code() == codes.Unauthenticated {
+				resp.State.RemoveResource(ctx)
+				return
+			}
+		}
 		resp.Diagnostics.AddError(
 			"Error checking API key",
 			"Could not connect to API: "+err.Error(),
-		)
-		return
-	}
-
-	internalClient := api.NewInternalServiceClient(conn)
-
-	_, err = internalClient.Settings(ctx, &emptypb.Empty{})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error checking API key",
-			"Could not read settings: "+err.Error(),
 		)
 		return
 	}
@@ -178,7 +174,7 @@ func (r resourceAPIKey) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 	}
 
 	internalClient := api.NewInternalServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

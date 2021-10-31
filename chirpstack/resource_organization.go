@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type resourceOrganizationType struct{}
@@ -80,7 +82,7 @@ func (r resourceOrganization) Create(ctx context.Context, req tfsdk.CreateResour
 	}
 
 	client := api.NewOrganizationServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -113,12 +115,18 @@ func (r resourceOrganization) Read(ctx context.Context, req tfsdk.ReadResourceRe
 	}
 
 	client := api.NewOrganizationServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	response, err := client.Get(ctx, &request)
 	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			if e.Code() == codes.NotFound {
+				resp.State.RemoveResource(ctx)
+				return
+			}
+		}
 		resp.Diagnostics.AddError(
 			"Error reading organization",
 			err.Error(),
@@ -171,7 +179,7 @@ func (r resourceOrganization) Update(ctx context.Context, req tfsdk.UpdateResour
 	}
 
 	client := api.NewOrganizationServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -202,7 +210,7 @@ func (r resourceOrganization) Delete(ctx context.Context, req tfsdk.DeleteResour
 	}
 
 	client := api.NewOrganizationServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -85,14 +85,14 @@ type ServiceProfile struct {
 	DrMin                  types.Int64 `tfsdk:"dr_min"`
 	DrMax                  types.Int64 `tfsdk:"dr_max"`
 	// []byte
-	ChannelMask    types.String `tfsdk:"channel_mask"`
-	PrAllowed      types.Bool   `tfsdk:"pr_allowed"`
-	HrAllowed      types.Bool   `tfsdk:"hr_allowed"`
-	RaAllowed      types.Bool   `tfsdk:"ra_allowed"`
-	NwkGeoLoc      types.Bool   `tfsdk:"nwk_geo_loc"`
-	TargetPer      types.Int64  `tfsdk:"target_per"`
-	MinGwDiversity types.Int64  `tfsdk:"min_gw_diversity"`
-	GwsPrivate     types.Bool   `tfsdk:"gws_private"`
+	ChannelMask    types.Int64 `tfsdk:"channel_mask"`
+	PrAllowed      types.Bool  `tfsdk:"pr_allowed"`
+	HrAllowed      types.Bool  `tfsdk:"hr_allowed"`
+	RaAllowed      types.Bool  `tfsdk:"ra_allowed"`
+	NwkGeoLoc      types.Bool  `tfsdk:"nwk_geo_loc"`
+	TargetPer      types.Int64 `tfsdk:"target_per"`
+	MinGwDiversity types.Int64 `tfsdk:"min_gw_diversity"`
+	GwsPrivate     types.Bool  `tfsdk:"gws_private"`
 }
 
 type DeviceProfile struct {

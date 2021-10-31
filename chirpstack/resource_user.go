@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type resourceUserType struct{}
@@ -87,7 +89,7 @@ func (r resourceUser) Create(ctx context.Context, req tfsdk.CreateResourceReques
 	}
 
 	client := api.NewUserServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -121,12 +123,18 @@ func (r resourceUser) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 	}
 
 	client := api.NewUserServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	response, err := client.Get(ctx, &request)
 	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			if e.Code() == codes.NotFound {
+				resp.State.RemoveResource(ctx)
+				return
+			}
+		}
 		resp.Diagnostics.AddError(
 			"Error reading user",
 			err.Error(),
@@ -201,7 +209,7 @@ func (r resourceUser) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 		User: &user,
 	}
 
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -232,7 +240,7 @@ func (r resourceUser) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 	}
 
 	client := api.NewUserServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

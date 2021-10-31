@@ -2,13 +2,14 @@ package chirpstack
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type resourceServiceProfileType struct{}
@@ -17,7 +18,7 @@ func (r resourceServiceProfileType) GetSchema(_ context.Context) (tfsdk.Schema, 
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.Int64Type,
+				Type:     types.StringType,
 				Computed: true,
 			},
 			"name": {
@@ -93,8 +94,9 @@ func (r resourceServiceProfileType) GetSchema(_ context.Context) (tfsdk.Schema, 
 				Computed: true,
 			},
 			"channel_mask": {
-				Type:     types.StringType,
-				Required: true,
+				Type:     types.Int64Type,
+				Optional: true,
+				Computed: true,
 			},
 			"pr_allowed": {
 				Type:     types.BoolType,
@@ -157,14 +159,36 @@ func (r resourceServiceProfile) Create(ctx context.Context, req tfsdk.CreateReso
 	}
 
 	serviceprofile := api.ServiceProfile{
-		Name: plan.Name.Value,
+		Name:                   plan.Name.Value,
+		OrganizationId:         plan.OrganizationId.Value,
+		NetworkServerId:        plan.NetworkServerId.Value,
+		UlRate:                 uint32(plan.UlRate.Value),
+		UlBucketSize:           uint32(plan.UlBucketSize.Value),
+		UlRatePolicy:           api.RatePolicy(plan.UlRatePolicy.Value),
+		DlRate:                 uint32(plan.DlRate.Value),
+		DlBucketSize:           uint32(plan.DlBucketSize.Value),
+		DlRatePolicy:           api.RatePolicy(plan.DlRatePolicy.Value),
+		AddGwMetadata:          plan.AddGwMetadata.Value,
+		DevStatusReqFreq:       uint32(plan.DevStatusReqFreq.Value),
+		ReportDevStatusBattery: plan.ReportDevStatusBattery.Value,
+		ReportDevStatusMargin:  plan.ReportDevStatusMargin.Value,
+		DrMin:                  uint32(plan.DrMin.Value),
+		DrMax:                  uint32(plan.DrMax.Value),
+		ChannelMask:            nil, // TODO
+		PrAllowed:              plan.PrAllowed.Value,
+		HrAllowed:              plan.HrAllowed.Value,
+		RaAllowed:              plan.RaAllowed.Value,
+		NwkGeoLoc:              plan.NwkGeoLoc.Value,
+		TargetPer:              uint32(plan.TargetPer.Value),
+		MinGwDiversity:         uint32(plan.MinGwDiversity.Value),
+		GwsPrivate:             plan.GwsPrivate.Value,
 	}
 	request := api.CreateServiceProfileRequest{
 		ServiceProfile: &serviceprofile,
 	}
 
 	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -177,7 +201,13 @@ func (r resourceServiceProfile) Create(ctx context.Context, req tfsdk.CreateReso
 		return
 	}
 
-	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), response.Id)
+	plan.ID = types.String{Value: response.Id}
+
+	diags = resp.State.Set(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	LoadRespFromResourceRead(ctx, NewCreateResponse(resp), r, req.ProviderMeta)
 }
@@ -197,12 +227,18 @@ func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	response, err := client.Get(ctx, &request)
 	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			if e.Code() == codes.NotFound {
+				resp.State.RemoveResource(ctx)
+				return
+			}
+		}
 		resp.Diagnostics.AddError(
 			"Error reading service profile",
 			err.Error(),
@@ -211,6 +247,29 @@ func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResource
 	}
 
 	state.Name = types.String{Value: response.ServiceProfile.Name}
+	state.OrganizationId = types.Int64{Value: int64(response.ServiceProfile.OrganizationId)}
+	state.NetworkServerId = types.Int64{Value: int64(response.ServiceProfile.NetworkServerId)}
+	state.UlRate = types.Int64{Value: int64(response.ServiceProfile.UlRate)}
+	state.UlBucketSize = types.Int64{Value: int64(response.ServiceProfile.UlBucketSize)}
+	state.UlRatePolicy = types.Int64{Value: int64(response.ServiceProfile.UlRatePolicy)}
+	state.DlRate = types.Int64{Value: int64(response.ServiceProfile.DlRate)}
+	state.DlBucketSize = types.Int64{Value: int64(response.ServiceProfile.DlBucketSize)}
+	state.DlRatePolicy = types.Int64{Value: int64(response.ServiceProfile.DlRatePolicy)}
+	state.AddGwMetadata = types.Bool{Value: response.ServiceProfile.AddGwMetadata}
+	state.DevStatusReqFreq = types.Int64{Value: int64(response.ServiceProfile.DevStatusReqFreq)}
+	state.ReportDevStatusBattery = types.Bool{Value: response.ServiceProfile.ReportDevStatusBattery}
+	state.ReportDevStatusMargin = types.Bool{Value: response.ServiceProfile.ReportDevStatusMargin}
+	state.DrMin = types.Int64{Value: int64(response.ServiceProfile.DrMin)}
+	state.DrMax = types.Int64{Value: int64(response.ServiceProfile.DrMax)}
+	state.ChannelMask = types.Int64{Null: true} // TODO
+	state.PrAllowed = types.Bool{Value: response.ServiceProfile.PrAllowed}
+	state.HrAllowed = types.Bool{Value: response.ServiceProfile.HrAllowed}
+	state.RaAllowed = types.Bool{Value: response.ServiceProfile.RaAllowed}
+	state.NwkGeoLoc = types.Bool{Value: response.ServiceProfile.NwkGeoLoc}
+	state.TargetPer = types.Int64{Value: int64(response.ServiceProfile.TargetPer)}
+	state.MinGwDiversity = types.Int64{Value: int64(response.ServiceProfile.MinGwDiversity)}
+	state.GwsPrivate = types.Bool{Value: response.ServiceProfile.GwsPrivate}
+
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -239,15 +298,37 @@ func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateReso
 	plan.ID = state.ID
 
 	serviceprofile := api.ServiceProfile{
-		Id:   plan.ID.Value,
-		Name: plan.Name.Value,
+		Id:                     plan.ID.Value,
+		Name:                   plan.Name.Value,
+		OrganizationId:         plan.OrganizationId.Value,
+		NetworkServerId:        plan.NetworkServerId.Value,
+		UlRate:                 uint32(plan.UlRate.Value),
+		UlBucketSize:           uint32(plan.UlBucketSize.Value),
+		UlRatePolicy:           api.RatePolicy(plan.UlRatePolicy.Value),
+		DlRate:                 uint32(plan.DlRate.Value),
+		DlBucketSize:           uint32(plan.DlBucketSize.Value),
+		DlRatePolicy:           api.RatePolicy(plan.DlRatePolicy.Value),
+		AddGwMetadata:          plan.AddGwMetadata.Value,
+		DevStatusReqFreq:       uint32(plan.DevStatusReqFreq.Value),
+		ReportDevStatusBattery: plan.ReportDevStatusBattery.Value,
+		ReportDevStatusMargin:  plan.ReportDevStatusMargin.Value,
+		DrMin:                  uint32(plan.DrMin.Value),
+		DrMax:                  uint32(plan.DrMax.Value),
+		ChannelMask:            nil, // TODO
+		PrAllowed:              plan.PrAllowed.Value,
+		HrAllowed:              plan.HrAllowed.Value,
+		RaAllowed:              plan.RaAllowed.Value,
+		NwkGeoLoc:              plan.NwkGeoLoc.Value,
+		TargetPer:              uint32(plan.TargetPer.Value),
+		MinGwDiversity:         uint32(plan.MinGwDiversity.Value),
+		GwsPrivate:             plan.GwsPrivate.Value,
 	}
 	request := api.UpdateServiceProfileRequest{
 		ServiceProfile: &serviceprofile,
 	}
 
 	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -278,7 +359,7 @@ func (r resourceServiceProfile) Delete(ctx context.Context, req tfsdk.DeleteReso
 	}
 
 	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -294,11 +375,7 @@ func (r resourceServiceProfile) Delete(ctx context.Context, req tfsdk.DeleteReso
 }
 
 func (r resourceServiceProfile) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	id, err := strconv.ParseInt(req.ID, 10, 64)
-	if err != nil {
-		resp.Diagnostics.AddError("Error importing service profile", err.Error())
-	}
-	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), id)
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req.ID)
 
 	LoadRespFromResourceRead(ctx, NewImportResponse(resp), r, tfsdk.Config{})
 }

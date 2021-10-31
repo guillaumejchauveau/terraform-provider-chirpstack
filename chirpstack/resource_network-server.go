@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type resourceNetworkServerType struct{}
@@ -121,7 +123,7 @@ func (r resourceNetworkServer) Create(ctx context.Context, req tfsdk.CreateResou
 	}
 
 	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -154,12 +156,18 @@ func (r resourceNetworkServer) Read(ctx context.Context, req tfsdk.ReadResourceR
 	}
 
 	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	response, err := client.Get(ctx, &request)
 	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			if e.Code() == codes.NotFound {
+				resp.State.RemoveResource(ctx)
+				return
+			}
+		}
 		resp.Diagnostics.AddError(
 			"Error reading network server",
 			err.Error(),
@@ -215,7 +223,7 @@ func (r resourceNetworkServer) Update(ctx context.Context, req tfsdk.UpdateResou
 	}
 
 	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -246,7 +254,7 @@ func (r resourceNetworkServer) Delete(ctx context.Context, req tfsdk.DeleteResou
 	}
 
 	client := api.NewNetworkServerServiceClient(r.p.Conn(ctx))
-	resp.Diagnostics.Append(r.p.Diagnostics...)
+	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -15,10 +15,16 @@ func New() tfsdk.Provider {
 
 type provider struct {
 	ConnectionData ConnectionData
-	Diagnostics    diag.Diagnostics
 
-	ctx  context.Context
-	conn *grpc.ClientConn
+	diagnostics diag.Diagnostics
+	ctx         context.Context
+	conn        *grpc.ClientConn
+}
+
+func (p *provider) Diagnostics() diag.Diagnostics {
+	diags := p.diagnostics
+	p.diagnostics = []diag.Diagnostic{}
+	return diags
 }
 
 // GetSchema
