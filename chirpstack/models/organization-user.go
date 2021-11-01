@@ -30,21 +30,9 @@ func OrganizationUserSchema() tfsdk.Schema {
 					tfsdk.RequiresReplace(),
 				},
 			},
-			"is_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"is_device_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"is_gateway_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
+			"is_admin":         {Type: types.BoolType, Optional: true, Computed: true},
+			"is_device_admin":  {Type: types.BoolType, Optional: true, Computed: true},
+			"is_gateway_admin": {Type: types.BoolType, Optional: true, Computed: true},
 		},
 	}
 }

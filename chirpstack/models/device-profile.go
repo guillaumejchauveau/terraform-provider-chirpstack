@@ -10,7 +10,49 @@ import (
 )
 
 func DeviceProfileSchema() tfsdk.Schema {
-	return tfsdk.Schema{}
+	return tfsdk.Schema{
+		Attributes: map[string]tfsdk.Attribute{
+			"id":                  {Type: types.StringType, Computed: true},
+			"name":                {Type: types.StringType, Required: true},
+			"organization_id":     {Type: types.Int64Type, Required: true},
+			"network_server_id":   {Type: types.Int64Type, Required: true},
+			"supports_class_b":    {Type: types.BoolType, Optional: true, Computed: true},
+			"class_b_timeout":     {Type: types.Int64Type, Optional: true, Computed: true},
+			"ping_slot_period":    {Type: types.Int64Type, Optional: true, Computed: true},
+			"ping_slot_dr":        {Type: types.Int64Type, Optional: true, Computed: true},
+			"ping_slot_freq":      {Type: types.Int64Type, Optional: true, Computed: true},
+			"supports_class_c":    {Type: types.BoolType, Optional: true, Computed: true},
+			"class_c_timeout":     {Type: types.Int64Type, Optional: true, Computed: true},
+			"mac_version":         {Type: types.StringType, Optional: true, Computed: true},
+			"reg_params_revision": {Type: types.StringType, Optional: true, Computed: true},
+			"rx_delay_1":          {Type: types.Int64Type, Optional: true, Computed: true},
+			"rx_dr_offset_1":      {Type: types.Int64Type, Optional: true, Computed: true},
+			"rx_datarate_2":       {Type: types.Int64Type, Optional: true, Computed: true},
+			"rx_freq_2":           {Type: types.Int64Type, Optional: true, Computed: true},
+			"factory_preset_freqs": {
+				Type:     types.SetType{ElemType: types.Int64Type},
+				Optional: true,
+				Computed: true,
+			},
+			"max_eirp":               {Type: types.Int64Type, Optional: true, Computed: true},
+			"max_duty_cycle":         {Type: types.Int64Type, Optional: true, Computed: true},
+			"supports_join":          {Type: types.BoolType, Optional: true, Computed: true},
+			"rf_region":              {Type: types.StringType, Optional: true, Computed: true},
+			"supports_32bit_f_cnt":   {Type: types.BoolType, Optional: true, Computed: true},
+			"payload_codec":          {Type: types.StringType, Optional: true, Computed: true},
+			"payload_encoder_script": {Type: types.StringType, Optional: true, Computed: true},
+			"payload_decoder_script": {Type: types.StringType, Optional: true, Computed: true},
+			"geoloc_buffer_ttl":      {Type: types.Int64Type, Optional: true, Computed: true},
+			"geoloc_min_buffer_size": {Type: types.Int64Type, Optional: true, Computed: true},
+			"tags": {
+				Type:     types.MapType{ElemType: types.StringType},
+				Optional: true,
+				Computed: true,
+			},
+			"uplink_interval":  {Type: DurationType{}, Optional: true, Computed: true},
+			"adr_algorithm_id": {Type: types.StringType, Optional: true, Computed: true},
+		},
+	}
 }
 
 type DeviceProfile struct {

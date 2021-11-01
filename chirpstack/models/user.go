@@ -9,39 +9,13 @@ import (
 func UserSchema() tfsdk.Schema {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.Int64Type,
-				Computed: true,
-			},
-			"email": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"password": {
-				Type:      types.StringType,
-				Required:  true,
-				Sensitive: true,
-			},
-			"is_active": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"is_admin": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"note": {
-				Type:     types.StringType,
-				Optional: true,
-				Computed: true,
-			},
-			"session_ttl": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
+			"id":          {Type: types.Int64Type, Computed: true},
+			"email":       {Type: types.StringType, Required: true},
+			"password":    {Type: types.StringType, Required: true, Sensitive: true},
+			"is_active":   {Type: types.BoolType, Optional: true, Computed: true},
+			"is_admin":    {Type: types.BoolType, Optional: true, Computed: true},
+			"note":        {Type: types.StringType, Optional: true, Computed: true},
+			"session_ttl": {Type: types.Int64Type, Optional: true, Computed: true},
 		},
 	}
 }

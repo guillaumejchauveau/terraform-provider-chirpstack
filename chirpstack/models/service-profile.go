@@ -9,122 +9,36 @@ import (
 func ServiceProfileSchema() tfsdk.Schema {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.StringType,
-				Computed: true,
-			},
-			"name": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"organization_id": {
-				Type:     types.Int64Type,
-				Required: true,
-			},
-			"network_server_id": {
-				Type:     types.Int64Type,
-				Required: true,
-			},
-			"ul_rate": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"ul_bucket_size": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"ul_rate_policy": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"dl_rate": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"dl_bucket_size": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"dl_rate_policy": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"add_gw_metadata": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"dev_status_req_freq": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
+			"id":                  {Type: types.StringType, Computed: true},
+			"name":                {Type: types.StringType, Required: true},
+			"organization_id":     {Type: types.Int64Type, Required: true},
+			"network_server_id":   {Type: types.Int64Type, Required: true},
+			"ul_rate":             {Type: types.Int64Type, Optional: true, Computed: true},
+			"ul_bucket_size":      {Type: types.Int64Type, Optional: true, Computed: true},
+			"ul_rate_policy":      {Type: types.Int64Type, Optional: true, Computed: true},
+			"dl_rate":             {Type: types.Int64Type, Optional: true, Computed: true},
+			"dl_bucket_size":      {Type: types.Int64Type, Optional: true, Computed: true},
+			"dl_rate_policy":      {Type: types.Int64Type, Optional: true, Computed: true},
+			"add_gw_metadata":     {Type: types.BoolType, Optional: true, Computed: true},
+			"dev_status_req_freq": {Type: types.Int64Type, Optional: true, Computed: true},
 			"report_dev_status_battery": {
 				Type:     types.BoolType,
 				Optional: true,
-				Computed: true,
-			},
+				Computed: true},
 			"report_dev_status_margin": {
 				Type:     types.BoolType,
 				Optional: true,
-				Computed: true,
-			},
-			"dr_min": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"dr_max": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"channel_mask": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"pr_allowed": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"hr_allowed": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"ra_allowed": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"nwk_geo_loc": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"target_per": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"min_gw_diversity": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"gws_private": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
+				Computed: true},
+			"dr_min":           {Type: types.Int64Type, Optional: true, Computed: true},
+			"dr_max":           {Type: types.Int64Type, Optional: true, Computed: true},
+			"channel_mask":     {Type: types.Int64Type, Optional: true, Computed: true},
+			"pr_allowed":       {Type: types.BoolType, Optional: true, Computed: true},
+			"hr_allowed":       {Type: types.BoolType, Optional: true, Computed: true},
+			"ra_allowed":       {Type: types.BoolType, Optional: true, Computed: true},
+			"nwk_geo_loc":      {Type: types.BoolType, Optional: true, Computed: true},
+			"target_per":       {Type: types.Int64Type, Optional: true, Computed: true},
+			"min_gw_diversity": {Type: types.Int64Type, Optional: true, Computed: true},
+			"gws_private":      {Type: types.BoolType, Optional: true, Computed: true},
 		},
 	}
 }
@@ -161,6 +75,7 @@ type ServiceProfile struct {
 
 func ServiceProfileFromApiType(s *api.ServiceProfile) ServiceProfile {
 	return ServiceProfile{
+		Id:                     types.String{Value: s.Id},
 		Name:                   types.String{Value: s.Name},
 		OrganizationId:         types.Int64{Value: int64(s.OrganizationId)},
 		NetworkServerId:        types.Int64{Value: int64(s.NetworkServerId)},

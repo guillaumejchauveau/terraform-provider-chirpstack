@@ -8,10 +8,7 @@ import (
 func APIKeySchema() tfsdk.Schema {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.StringType,
-				Computed: true,
-			},
+			"id": {Type: types.StringType, Computed: true},
 			"name": {
 				Type:     types.StringType,
 				Required: true,
@@ -43,11 +40,7 @@ func APIKeySchema() tfsdk.Schema {
 					tfsdk.RequiresReplace(),
 				},
 			},
-			"key": {
-				Type:      types.StringType,
-				Computed:  true,
-				Sensitive: true,
-			},
+			"key": {Type: types.StringType, Computed: true, Sensitive: true},
 		},
 	}
 }

@@ -10,18 +10,9 @@ import (
 func NetworkServerSchema() tfsdk.Schema {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.Int64Type,
-				Computed: true,
-			},
-			"name": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"server": {
-				Type:     types.StringType,
-				Required: true,
-			},
+			"id":     {Type: types.Int64Type, Computed: true},
+			"name":   {Type: types.StringType, Required: true},
+			"server": {Type: types.StringType, Required: true},
 			"ca_cert": {
 				Type:      types.StringType,
 				Optional:  true,

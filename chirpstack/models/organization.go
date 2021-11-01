@@ -9,33 +9,12 @@ import (
 func OrganizationSchema() tfsdk.Schema {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.Int64Type,
-				Computed: true,
-			},
-			"name": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"display_name": {
-				Type:     types.StringType,
-				Required: true,
-			},
-			"can_have_gateways": {
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-			},
-			"max_gateway_count": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
-			"max_device_count": {
-				Type:     types.Int64Type,
-				Optional: true,
-				Computed: true,
-			},
+			"id":                {Type: types.Int64Type, Computed: true},
+			"name":              {Type: types.StringType, Required: true},
+			"display_name":      {Type: types.StringType, Required: true},
+			"can_have_gateways": {Type: types.BoolType, Optional: true, Computed: true},
+			"max_gateway_count": {Type: types.Int64Type, Optional: true, Computed: true},
+			"max_device_count":  {Type: types.Int64Type, Optional: true, Computed: true},
 		},
 	}
 }
