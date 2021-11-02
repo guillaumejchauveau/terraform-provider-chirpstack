@@ -2,6 +2,7 @@ package chirpstack
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-chirpstack/chirpstack/models"
 
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
@@ -12,39 +13,39 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type resourceServiceProfileType struct{}
+type resourceApplicationType struct{}
 
-func (r resourceServiceProfileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return models.ServiceProfileSchema(), nil
+func (r resourceApplicationType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	return models.ApplicationSchema(), nil
 }
 
 // New resource instance
-func (r resourceServiceProfileType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return resourceServiceProfile{
+func (r resourceApplicationType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return resourceApplication{
 		p: *(p.(*provider)),
 	}, nil
 }
 
-type resourceServiceProfile struct {
+type resourceApplication struct {
 	p provider
 }
 
 // Create a new resource
-func (r resourceServiceProfile) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r resourceApplication) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// Retrieve values from plan
-	var plan models.ServiceProfile
+	var plan models.Application
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	serviceprofile := plan.ToApiType()
-	request := api.CreateServiceProfileRequest{
-		ServiceProfile: &serviceprofile,
+	application := plan.ToApiType()
+	request := api.CreateApplicationRequest{
+		Application: &application,
 	}
 
-	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
+	client := api.NewApplicationServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -52,7 +53,7 @@ func (r resourceServiceProfile) Create(ctx context.Context, req tfsdk.CreateReso
 	response, err := client.Create(ctx, &request)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error creating serviceprofile",
+			"Error creating application",
 			err.Error(),
 		)
 		return
@@ -64,20 +65,20 @@ func (r resourceServiceProfile) Create(ctx context.Context, req tfsdk.CreateReso
 }
 
 // Read resource information
-func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r resourceApplication) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state models.ServiceProfile
+	var state models.Application
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	request := api.GetServiceProfileRequest{
+	request := api.GetApplicationRequest{
 		Id: state.Id.Value,
 	}
 
-	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
+	client := api.NewApplicationServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -91,13 +92,13 @@ func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResource
 			}
 		}
 		resp.Diagnostics.AddError(
-			"Error reading service profile",
+			"Error reading application",
 			err.Error(),
 		)
 		return
 	}
 
-	newState := models.ServiceProfileFromApiType(response.ServiceProfile)
+	newState := models.ApplicationFromApiType(response.Application)
 	diags = resp.State.Set(ctx, &newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -106,9 +107,9 @@ func (r resourceServiceProfile) Read(ctx context.Context, req tfsdk.ReadResource
 }
 
 // Update resource
-func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r resourceApplication) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Retrieve values from plan
-	var plan models.ServiceProfile
+	var plan models.Application
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -116,7 +117,7 @@ func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateReso
 	}
 
 	// Get current state
-	var state models.ServiceProfile
+	var state models.Application
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -125,12 +126,12 @@ func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateReso
 
 	plan.Id = state.Id
 
-	serviceprofile := plan.ToApiType()
-	request := api.UpdateServiceProfileRequest{
-		ServiceProfile: &serviceprofile,
+	application := plan.ToApiType()
+	request := api.UpdateApplicationRequest{
+		Application: &application,
 	}
 
-	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
+	client := api.NewApplicationServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -138,7 +139,7 @@ func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateReso
 	_, err := client.Update(ctx, &request)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error updating service profile",
+			"Error updating application",
 			err.Error(),
 		)
 		return
@@ -148,20 +149,20 @@ func (r resourceServiceProfile) Update(ctx context.Context, req tfsdk.UpdateReso
 }
 
 // Delete resource
-func (r resourceServiceProfile) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r resourceApplication) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// Get current state
-	var state models.ServiceProfile
+	var state models.Application
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	request := api.DeleteServiceProfileRequest{
+	request := api.DeleteApplicationRequest{
 		Id: state.Id.Value,
 	}
 
-	client := api.NewServiceProfileServiceClient(r.p.Conn(ctx))
+	client := api.NewApplicationServiceClient(r.p.Conn(ctx))
 	resp.Diagnostics.Append(r.p.Diagnostics()...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -169,7 +170,7 @@ func (r resourceServiceProfile) Delete(ctx context.Context, req tfsdk.DeleteReso
 	_, err := client.Delete(ctx, &request)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error deleting service profile",
+			"Error deleting application",
 			err.Error(),
 		)
 		return
@@ -177,8 +178,12 @@ func (r resourceServiceProfile) Delete(ctx context.Context, req tfsdk.DeleteReso
 	resp.State.RemoveResource(ctx)
 }
 
-func (r resourceServiceProfile) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req.ID)
+func (r resourceApplication) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("Error importing application", err.Error())
+	}
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), id)
 
 	LoadRespFromResourceRead(ctx, NewImportResponse(resp), r, tfsdk.Config{})
 }

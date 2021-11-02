@@ -58,6 +58,8 @@ func (r resourceGateway) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), plan.Id)
+
 	LoadRespFromResourceRead(ctx, NewCreateResponse(resp), r, req.ProviderMeta)
 }
 

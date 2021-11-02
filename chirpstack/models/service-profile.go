@@ -24,11 +24,13 @@ func ServiceProfileSchema() tfsdk.Schema {
 			"report_dev_status_battery": {
 				Type:     types.BoolType,
 				Optional: true,
-				Computed: true},
+				Computed: true,
+			},
 			"report_dev_status_margin": {
 				Type:     types.BoolType,
 				Optional: true,
-				Computed: true},
+				Computed: true,
+			},
 			"dr_min":           {Type: types.Int64Type, Optional: true, Computed: true},
 			"dr_max":           {Type: types.Int64Type, Optional: true, Computed: true},
 			"channel_mask":     {Type: types.Int64Type, Optional: true, Computed: true},

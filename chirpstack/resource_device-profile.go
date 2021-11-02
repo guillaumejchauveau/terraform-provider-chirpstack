@@ -7,7 +7,6 @@ import (
 	"github.com/brocaar/chirpstack-api/go/v3/as/external/api"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -59,13 +58,7 @@ func (r resourceDeviceProfile) Create(ctx context.Context, req tfsdk.CreateResou
 		return
 	}
 
-	plan.Id = types.String{Value: response.Id}
-
-	diags = resp.State.Set(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), response.Id)
 
 	LoadRespFromResourceRead(ctx, NewCreateResponse(resp), r, req.ProviderMeta)
 }

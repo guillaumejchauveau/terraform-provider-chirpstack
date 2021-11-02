@@ -58,6 +58,8 @@ func (r resourceDevice) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 		return
 	}
 
+	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("dev_eui"), plan.DevEui)
+
 	LoadRespFromResourceRead(ctx, NewCreateResponse(resp), r, req.ProviderMeta)
 }
 

@@ -3,7 +3,6 @@ module terraform-provider-chirpstack
 go 1.16
 
 require (
-	github.com/brocaar/chirpstack-api/go v0.0.0-20191211112942-a2d1c6285030
 	github.com/brocaar/chirpstack-api/go/v3 v3.12.4
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/protobuf v1.5.2

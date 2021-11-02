@@ -77,6 +77,7 @@ func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceTyp
 		"chirpstack_device-profile":    resourceDeviceProfileType{},
 		"chirpstack_device":            resourceDeviceType{},
 		"chirpstack_gateway":           resourceGatewayType{},
+		"chirpstack_application":       resourceApplicationType{},
 	}, nil
 }
 
