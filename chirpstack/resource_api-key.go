@@ -58,7 +58,7 @@ func (r resourceAPIKey) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	response, err := client.CreateAPIKey(ctx, &request)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error creating network server",
+			"Error creating API key",
 			err.Error(),
 		)
 		return
