@@ -12,36 +12,36 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type resourceDeviceType struct{}
+type resourceDeviceKeysType struct{}
 
-func (r resourceDeviceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return models.DeviceSchema(), nil
+func (r resourceDeviceKeysType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	return models.DeviceKeysSchema(), nil
 }
 
 // New resource instance
-func (r resourceDeviceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return resourceDevice{
+func (r resourceDeviceKeysType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return resourceDeviceKeys{
 		p: *(p.(*provider)),
 	}, nil
 }
 
-type resourceDevice struct {
+type resourceDeviceKeys struct {
 	p provider
 }
 
 // Create a new resource
-func (r resourceDevice) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r resourceDeviceKeys) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// Retrieve values from plan
-	var plan models.Device
+	var plan models.DeviceKeys
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	device := plan.ToApiType(ctx)
-	request := api.CreateDeviceRequest{
-		Device: &device,
+	devicekeys := plan.ToApiType()
+	request := api.CreateDeviceKeysRequest{
+		DeviceKeys: &devicekeys,
 	}
 
 	client := api.NewDeviceServiceClient(r.p.Conn(ctx))
@@ -49,10 +49,10 @@ func (r resourceDevice) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	_, err := client.Create(ctx, &request)
+	_, err := client.CreateKeys(ctx, &request)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error creating device",
+			"Error creating devicekeys",
 			err.Error(),
 		)
 		return
@@ -64,16 +64,16 @@ func (r resourceDevice) Create(ctx context.Context, req tfsdk.CreateResourceRequ
 }
 
 // Read resource information
-func (r resourceDevice) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r resourceDeviceKeys) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	// Get current state
-	var state models.Device
+	var state models.DeviceKeys
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	request := api.GetDeviceRequest{
+	request := api.GetDeviceKeysRequest{
 		DevEui: state.DevEui.Value,
 	}
 
@@ -82,7 +82,7 @@ func (r resourceDevice) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	response, err := client.Get(ctx, &request)
+	response, err := client.GetKeys(ctx, &request)
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
 			if e.Code() == codes.NotFound {
@@ -91,13 +91,13 @@ func (r resourceDevice) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 			}
 		}
 		resp.Diagnostics.AddError(
-			"Error reading device",
+			"Error reading devicekeys",
 			err.Error(),
 		)
 		return
 	}
 
-	newState := models.DeviceFromApiType(response.Device)
+	newState := models.DeviceKeysFromApiType(response.DeviceKeys)
 	diags = resp.State.Set(ctx, &newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -106,18 +106,18 @@ func (r resourceDevice) Read(ctx context.Context, req tfsdk.ReadResourceRequest,
 }
 
 // Update resource
-func (r resourceDevice) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r resourceDeviceKeys) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Retrieve values from plan
-	var plan models.Device
+	var plan models.DeviceKeys
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	device := plan.ToApiType(ctx)
-	request := api.UpdateDeviceRequest{
-		Device: &device,
+	devicekeys := plan.ToApiType()
+	request := api.UpdateDeviceKeysRequest{
+		DeviceKeys: &devicekeys,
 	}
 
 	client := api.NewDeviceServiceClient(r.p.Conn(ctx))
@@ -125,10 +125,10 @@ func (r resourceDevice) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	_, err := client.Update(ctx, &request)
+	_, err := client.UpdateKeys(ctx, &request)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error updating device",
+			"Error updating devicekeys",
 			err.Error(),
 		)
 		return
@@ -138,16 +138,16 @@ func (r resourceDevice) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 }
 
 // Delete resource
-func (r resourceDevice) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r resourceDeviceKeys) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// Get current state
-	var state models.Device
+	var state models.DeviceKeys
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	request := api.DeleteDeviceRequest{
+	request := api.DeleteDeviceKeysRequest{
 		DevEui: state.DevEui.Value,
 	}
 
@@ -156,10 +156,10 @@ func (r resourceDevice) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	_, err := client.Delete(ctx, &request)
+	_, err := client.DeleteKeys(ctx, &request)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error deleting device",
+			"Error deleting devicekeys",
 			err.Error(),
 		)
 		return
@@ -167,7 +167,7 @@ func (r resourceDevice) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 	resp.State.RemoveResource(ctx)
 }
 
-func (r resourceDevice) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r resourceDeviceKeys) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	resp.State.SetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("dev_eui"), req.ID)
 
 	LoadRespFromResourceRead(ctx, NewImportResponse(resp), r, tfsdk.Config{})
