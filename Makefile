@@ -1,11 +1,9 @@
 TEST?=$$(go list ./... | grep -v 'vendor')
-HOSTNAME=github.com
-NAMESPACE=mycelium
+NAMESPACE=guillaumejchauveau
 NAME=chirpstack
 BINARY=terraform-provider-${NAME}
-VERSION=0.3.2
+VERSION=0.1.0
 OS_ARCH=linux_amd64
-GO=~/go/bin/go1.17.2
 
 default: install
 
@@ -27,8 +25,8 @@ release:
 	GOOS=windows GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_windows_amd64
 
 install: build
-	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
-	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	mkdir -p ~/.terraform.d/plugins/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	mv ${BINARY} ~/.terraform.d/plugins/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
 test:
 	go test -i $(TEST) || exit 1
