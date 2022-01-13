@@ -17,7 +17,6 @@ type provider struct {
 	ConnectionData ConnectionData
 
 	diagnostics diag.Diagnostics
-	ctx         context.Context
 	conn        *grpc.ClientConn
 }
 

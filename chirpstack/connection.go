@@ -59,7 +59,7 @@ func (p *provider) dial(ctx context.Context) (*grpc.ClientConn, error) {
 		}
 
 		internalClient := api.NewInternalServiceClient(conn)
-		loginResp, err := internalClient.Login(p.ctx, &loginReq)
+		loginResp, err := internalClient.Login(ctx, &loginReq)
 		conn.Close()
 		if err != nil {
 			return nil, err
