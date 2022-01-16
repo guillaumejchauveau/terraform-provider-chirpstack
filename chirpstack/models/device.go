@@ -85,7 +85,7 @@ func (s *Device) ToApiType(ctx context.Context) api.Device {
 		if err != nil {
 			panic(err)
 		}
-		variables[k] = value.(types.String).Value
+		variables[k] = value.(string)
 	}
 	tags := map[string]string{}
 	for k, v := range s.Tags.Elems {
@@ -93,7 +93,7 @@ func (s *Device) ToApiType(ctx context.Context) api.Device {
 		if err != nil {
 			panic(err)
 		}
-		tags[k] = value.(types.String).Value
+		tags[k] = value.(string)
 	}
 	return api.Device{
 		DevEui:            s.DevEui.Value,

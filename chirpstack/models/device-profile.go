@@ -151,7 +151,7 @@ func (s *DeviceProfile) ToApiType(ctx context.Context) api.DeviceProfile {
 		if err != nil {
 			panic(err)
 		}
-		tags[k] = value.(types.String).Value
+		tags[k] = value.(string)
 	}
 
 	return api.DeviceProfile{

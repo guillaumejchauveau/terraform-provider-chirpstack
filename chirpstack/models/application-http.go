@@ -51,7 +51,7 @@ func (s *ApplicationHttp) ToApiType(ctx context.Context) api.HTTPIntegration {
 		if err != nil {
 			panic(err)
 		}
-		headers = append(headers, &api.HTTPIntegrationHeader{Key: k, Value: value.(types.String).Value})
+		headers = append(headers, &api.HTTPIntegrationHeader{Key: k, Value: value.(string)})
 	}
 	return api.HTTPIntegration{
 		ApplicationId:    s.ApplicationId.Value,
